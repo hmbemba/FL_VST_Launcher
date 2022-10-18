@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from gui.DPGW.BaseView import BaseView
 from dataclasses import dataclass
@@ -6,10 +7,14 @@ from gui.DPGW.Container import Container
 from gui.DPGW.Row import Row
 from gui.DPGW.Button import Button
 import dearpygui.dearpygui as dpg
+from PIL import Image
+from collections import defaultdict
 
 
 @dataclass
 class MyView(BaseView):
+    iconsFolderPath:Path = Path(Path(Path(__file__).parent).parent).parent / "VST_ICONS"
+    
     def __post_init__(self):
         self.id = self.getId()
         with dpg.stage(tag=f"Stage_{self.id}"):
@@ -26,8 +31,8 @@ class MyView(BaseView):
                     "verticalItemSpacing": [0, 0],
                     "border": True,
                     "borderRadius": 0,
-                    "borderColor": [255, 0, 0, 255],  # "orange",
-                    "bkgColor": [0, 0, 255, 255],
+                    "borderColor": [255, 0, 0, 0],  # "orange",
+                    "bkgColor": [0, 0, 255, 0],
                     "padding": [0, 0],  # [LR,TB] !Can also be negative
                     "onHover": None,
                     "noScrollBar": True,
@@ -35,65 +40,106 @@ class MyView(BaseView):
                 }
             ).create()
         self.createIconRow()
+        self.createImageButtons()
+
+    
+            
+    def lsfil(self,path):
+        return [item for item in Path(path).iterdir() if item.is_file()]
+    
+    def resizeImage(self,srcImgPath:str | Path, dstImgPath: str|Path, size:tuple):
+            image = Image.open(str(srcImgPath))
+            rs = image.resize(size)
+            
+            rs.save(dstImgPath)
         
-        # for icon in item.ls(vstIconsFolderPath)[:middle_index]:
-        #     Image().create(Parent=row.link())
+
+    def resizeImages(self, pathToFolderContainingImages:str | Path):
+        for pic in self.lsfil(pathToFolderContainingImages):
+            if "_resized_100" in str(pic):
+                ...
+            else:
+                resizedPath = Path(pic).parent / str(Path(pic).stem + "_resized_100" + Path(pic).suffix)
+                if not resizedPath.exists():
+                    self.resizeImage(pic, resizedPath, (100,100))
+    
+    def openVst(self, vstName):
+        def def_value():
+            print(vstName)
+            raise Exception("File Not Found")
+        d = defaultdict(def_value)
+        vstNameFormatted = vstName.split('_resized')[0].upper()
+        
+        
+        def open(vstPath):
+            subprocess.run(["powershell.exe", fr'start-process "{vstPath}" '])
+        
+        
+        d["FLEX"] =  lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\FLEX.FST")
+        d["HARMOR"] = lambda:open(r'D:/FL SymLinks/Image-Line/FL Studio/Presets/Plugin database/Generators/1) MAIN/Main/Harmor.fst')
+        d["KONTAKT"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\synth\Kontakt.fsts")
+        d["OPX"] = lambda:open(r'D:/FL SymLinks/Image-Line/FL Studio/Presets/Plugin database/Generators/1) MAIN/Main/OP-X PRO-II [64bit].fst')
+        d["PG-8X"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\synth\PG-8X.fst")
+        d["SAMPLETANK"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\SampleTank 4.fst")
+        d["SCALER2"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\Instrument\Scaler 2.fst")
+        d["SERATO_SAMPLE"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\synth\Serato Sample.fst")
+        d["SUBLAB"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\SubLab.fst")
+        d["TRUEPIANOS"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\Pianos\TruePianos.fst")
+        d["XPAND"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\Xpand!2 [64bit].fst")
+        
+        d[vstNameFormatted]()
+        
+    
+    def createImageButton(self,iconPath:Path | str, parent):
+        width, height, channels, data = dpg.load_image(str(iconPath))
+        with dpg.texture_registry():
+            dpg.add_static_texture(width=100, height=100, default_value=data, tag=Path(iconPath).stem)
+        dpg.add_image_button(texture_tag=Path(iconPath).stem, parent=parent, callback=lambda: self.openVst(iconPath.stem))
             
-            
+    
+    def createImageButtons(self):
+        if not self.iconsFolderPath.exists():
+            raise Exception("Can't find 'VST_ICONS' folder")
+        
+        self.resizeImages(self.iconsFolderPath)
+        
+        count = 0
+        for index, path in enumerate(self.lsfil(self.iconsFolderPath)):
+            if "_resized_100" in str(path):
+                if count < 9:
+                    parent = f"row_1_{self.id}_row"
+                else:
+                    parent = f"row_2_{self.id}_row"
+                self.createImageButton(path, parent)
+                count+=1
+                
             
 
-    def imageButton(vstName:str, iconPath:Path):
-        ...
+
     
     def createIconRow(self):
         r1 = Row(
             **{
                 "tag": f"row_1_{self.id}",
                 "parent": self.top.link(),
-                "numCols": 10,
+                "numCols": 9,
                 "sizing": 1,  # ,1,2,3,
                 "border": True,
-                "bkgColor": [255, 0, 0, 255],
-                "padding": [0, 0],  # Default is [10,0]
+                "bkgColor": [255, 0, 0, 0],
+                "padding": [10, 10],  # Default is [10,0]
                 "user_data": None,
             }
         ).create()
-        Button(
-            **{
-                "tag": f"harmor_{self.id}",
-                "w": 100,
-                "h": 100,
-                "text": "Harmor",
-                "textColor": [255, 255, 255, 255],  # "white",
-                "font": "mainFont_20",
-                "callback": None,  # self.autoFind,
-                "user_data": ...,
-                "border": False,
-                "borderRadius": 0,
-                "borderColor": [0, 0, 0, 0],  #'red',
-                "bkgColor": [0, 0, 0, 0],
-                "bkgColorHovered": [0, 0, 0, 100],  # [37 * 0.7, 37 * 0.7, 38 * 0.7, 255],
-                "bkgColorClicked": [0, 0, 0, 0],  #'green',
-                "padding": [0, 0],  # [10, 10],
-            }
-        ).create(Parent=r1.link())
         
-        Button(
+        r2 = Row(
             **{
-                "tag": f"harmor2_{self.id}",
-                "w": 100,
-                "h": 100,
-                "text": "Harmor2",
-                "textColor": [255, 255, 255, 255],  # "white",
-                "font": "mainFont_20",
-                "callback": None,  # self.autoFind,
-                "user_data": ...,
-                "border": False,
-                "borderRadius": 0,
-                "borderColor": [0, 0, 0, 0],  #'red',
-                "bkgColor": [0, 0, 0, 0],
-                "bkgColorHovered": [0, 0, 0, 100],  # [37 * 0.7, 37 * 0.7, 38 * 0.7, 255],
-                "bkgColorClicked": [0, 0, 0, 0],  #'green',
-                "padding": [0, 0],  # [10, 10],
+                "tag": f"row_2_{self.id}",
+                "parent": self.top.link(),
+                "numCols": 9,
+                "sizing": 1,  # ,1,2,3,
+                "border": True,
+                "bkgColor": [255, 0, 0, 0],
+                "padding": [10, 10],  # Default is [10,0]
+                "user_data": None,
             }
-        ).create(Parent=r1.link())
+        ).create()
