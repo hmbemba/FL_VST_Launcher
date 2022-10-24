@@ -14,7 +14,7 @@ from collections import defaultdict
 @dataclass
 class MyView(BaseView):
     iconsFolderPath:Path = Path(Path(Path(__file__).parent).parent).parent / "VST_ICONS"
-    
+    numIconsPerRow = 13
     def __post_init__(self):
         self.id = self.getId()
         with dpg.stage(tag=f"Stage_{self.id}"):
@@ -64,6 +64,10 @@ class MyView(BaseView):
                     self.resizeImage(pic, resizedPath, (100,100))
     
     def openVst(self, vstName):
+        '''
+        need error checking for a bad path or if path nto found,
+        create a pop up window
+        '''
         def def_value():
             print(vstName)
             raise Exception("File Not Found")
@@ -74,18 +78,30 @@ class MyView(BaseView):
         def open(vstPath):
             subprocess.run(["powershell.exe", fr'start-process "{vstPath}" '])
         
-        
-        d["FLEX"] =  lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\FLEX.FST")
-        d["HARMOR"] = lambda:open(r'D:/FL SymLinks/Image-Line/FL Studio/Presets/Plugin database/Generators/1) MAIN/Main/Harmor.fst')
-        d["KONTAKT"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\synth\Kontakt.fsts")
-        d["OPX"] = lambda:open(r'D:/FL SymLinks/Image-Line/FL Studio/Presets/Plugin database/Generators/1) MAIN/Main/OP-X PRO-II [64bit].fst')
-        d["PG-8X"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\synth\PG-8X.fst")
-        d["SAMPLETANK"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\SampleTank 4.fst")
-        d["SCALER2"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\Instrument\Scaler 2.fst")
-        d["SERATO_SAMPLE"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\synth\Serato Sample.fst")
-        d["SUBLAB"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\SubLab.fst")
-        d["TRUEPIANOS"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\Pianos\TruePianos.fst")
-        d["XPAND"] = lambda:open(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators\1) MAIN\Main\Xpand!2 [64bit].fst")
+        generatorsFolder = Path(r"D:\FL SymLinks\Image-Line\FL Studio\Presets\Plugin database\Generators")
+        mainFolder = generatorsFolder /r"1) MAIN\Main"
+
+        d["FLEX"] =  lambda:open(mainFolder / "FLEX.FST")
+        d["HARMOR"] = lambda:open(mainFolder / "Harmor.fst")
+        d["KONTAKT"] = lambda:open(generatorsFolder /r"synth\Kontakt.fsts")
+        d["OPX"] = lambda:open(mainFolder / 'OP-X PRO-II [64bit].fst')
+        d["PG-8X"] = lambda:open(generatorsFolder /r"synth\PG-8X.fst")
+        d["SAMPLETANK"] = lambda:open(mainFolder / "SampleTank 4.fst")
+        d["SCALER2"] = lambda:open(generatorsFolder /r"Instrument\Scaler 2.fst")
+        d["SERATO_SAMPLE"] = lambda:open(generatorsFolder /r"synth\Serato Sample.fst")
+        d["SUBLAB"] = lambda:open(mainFolder / "SubLab.fst")
+        d["TRUEPIANOS"] = lambda:open(generatorsFolder /r"Pianos\TruePianos.fst")
+        d["XPAND"] = lambda:open(mainFolder / "Xpand!2 [64bit].fst")
+        d["SYNTHMASTER"] = lambda:open(mainFolder / "SynthMaster 2.9 DEMO Instrument x64 [64bit].fst")
+        d["TRILLIAN"] = lambda:open(mainFolder / "Trilian [64bit].fst")
+        d["RMX"] = lambda:open(mainFolder / "StylusRMX [64bit].fst")
+        d["SYNTH1"] = lambda:open(mainFolder / "Synth1 VST64.fst")
+        d["WAVESTATION"] = lambda:open(generatorsFolder /r"KORG\Korg\WAVESTATION.fst")
+        d["M1"] = lambda:open(generatorsFolder /r"KORG\Korg\M1.fst")
+        d["MINIMOGUE"] = lambda:open(generatorsFolder /r"Retro\MinimogueVA.fst")
+        d["GENESIS"] = lambda:open(generatorsFolder /r"synth\Genesis Pro.fst")
+        d["REGROOVER"] = lambda:open(generatorsFolder /r"synth\Regroover Pro [64bit].fst")
+        d["AVENGER"] = lambda:open(generatorsFolder /r"Instrument\VPS Avenger.fst")
         
         d[vstNameFormatted]()
         
@@ -106,7 +122,7 @@ class MyView(BaseView):
         count = 0
         for index, path in enumerate(self.lsfil(self.iconsFolderPath)):
             if "_resized_100" in str(path):
-                if count < 9:
+                if count < self.numIconsPerRow:
                     parent = f"row_1_{self.id}_row"
                 else:
                     parent = f"row_2_{self.id}_row"
@@ -122,7 +138,7 @@ class MyView(BaseView):
             **{
                 "tag": f"row_1_{self.id}",
                 "parent": self.top.link(),
-                "numCols": 9,
+                "numCols": self.numIconsPerRow,
                 "sizing": 1,  # ,1,2,3,
                 "border": True,
                 "bkgColor": [255, 0, 0, 0],
@@ -135,7 +151,7 @@ class MyView(BaseView):
             **{
                 "tag": f"row_2_{self.id}",
                 "parent": self.top.link(),
-                "numCols": 9,
+                "numCols": self.numIconsPerRow,
                 "sizing": 1,  # ,1,2,3,
                 "border": True,
                 "bkgColor": [255, 0, 0, 0],

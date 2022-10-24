@@ -40,7 +40,7 @@ with dpg.theme() as item_theme:
         DpgColor([31, 31, 31, 255]).windowBg()
 dpg.bind_item_theme("Primary Window", item_theme)
 
-dpg.create_viewport(title="FL VST Launcher", width=int(screen_width*.8), height=int(screen_height*.2))
+dpg.create_viewport(title="FL VST Launcher", width=int(screen_width*.9), height=int(screen_height*.3))
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("Primary Window", True)
